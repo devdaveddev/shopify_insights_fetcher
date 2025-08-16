@@ -9,3 +9,5 @@ PRODUCT_ENDPOINTS = [
 # crawler limits
 MAX_HERO = 10
 MAX_FAQS = 30
+GOOGLE_API_KEY = ""
+# GOOGLE_SEARCH_ENGINE_ID = "your_search_engine_id" 
