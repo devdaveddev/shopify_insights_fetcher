@@ -4,9 +4,9 @@ from typing import List, Optional, Dict, Tuple
 import httpx
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from models import Product
-from utils import normalize_base, soup_text_excerpt, extract_emails_and_phones_from_soup, join_url
-from config import USER_AGENT, TIMEOUT, PRODUCT_ENDPOINTS, MAX_HERO, MAX_FAQS
+from app.models import Product
+from app.utils import normalize_base, soup_text_excerpt, extract_emails_and_phones_from_soup, join_url
+from app.config import USER_AGENT, TIMEOUT, PRODUCT_ENDPOINTS, MAX_HERO, MAX_FAQS
 import re
 
 HEADERS = {"User-Agent": USER_AGENT}
