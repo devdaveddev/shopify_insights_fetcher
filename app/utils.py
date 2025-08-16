@@ -3,7 +3,8 @@ import re
 import httpx
 from typing import Tuple, List, Optional
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
+from app.config import GOOGLE_API_KEY, GOOGLE_SEARCH_ENGINE_ID
 
 # regex patterns
 email_re = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")
@@ -73,30 +74,36 @@ async def fetch_html(url: str, timeout: int = 10) -> Optional[str]:
         print(f"[WARN] Failed to fetch {url}: {e}")
     return None
 
-
-import re
-# import requests
-from urllib.parse import urlparse
-
-def find_competitors(brand_url: str):
+async def find_competitors(brand_url: str):
     """
-    Naive competitor finder: 
-    1. Extracts brand name from domain.
-    2. Uses a static mapping of known competitors (MVP approach).
+    Dynamically fetch competitor URLs using Google Custom Search API.
     """
+    competitors = []
 
+    # Extract brand name from the URL
     domain = urlparse(brand_url).netloc
     brand = domain.split(".")[0]  # crude brand name extraction
 
-    # Example competitor mapping (expand later with web search logic)
-    competitors_map = {
-        "allbirds": ["rothys.com", "nike.com", "adidas.com"],
-        "gymshark": ["aloyoga.com", "lululemon.com", "underarmour.com"],
-        "warbyparker": ["ray-ban.com", "eyebuydirect.com", "zennioptical.com"],
-    }
+    # Use Google Custom Search API to find competitors
+    search_query = f"competitors of {brand}"
+    google_api_url = (
+        f"https://www.googleapis.com/customsearch/v1"
+        f"?key={GOOGLE_API_KEY}&cx={GOOGLE_SEARCH_ENGINE_ID}&q={search_query}"
+    )
 
-    for key, rivals in competitors_map.items():
-        if key in brand.lower():
-            return rivals
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(google_api_url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
 
-    return []  # no known competitors# no known competitors
+            # Extract competitor URLs from search results
+            for item in data.get("items", []):
+                link = item.get("link")
+                if link:
+                    competitors.append(link)
+
+    except Exception as e:
+        print(f"[WARN] Failed to fetch competitors using Google API: {e}")
+
+    return competitors
