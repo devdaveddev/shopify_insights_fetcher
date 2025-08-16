@@ -1,4 +1,3 @@
-
 from typing import List, Optional, Dict
 from pydantic import BaseModel, HttpUrl
 
@@ -19,8 +18,12 @@ class BrandContext(BaseModel):
     product_catalog: List[Product] = []
     privacy_policy: Optional[str] = None
     return_refund_policy: Optional[str] = None
-    faqs: List[Dict] = []                # [{"q":..., "a":...}]
+    faqs: List[Dict] = []   # [{"q":..., "a":...}]
     social_handles: Dict[str, Optional[str]] = {}
-    contact: Dict[str, list] = {}   # {"emails": [...], "phones":[...]}
+    contact: Dict[str, list] = {}  # {"emails": [...], "phones":[...]}
     about: Optional[str] = None
     important_links: Dict[str, Optional[str]] = {}
+
+class CompetitorContext(BaseModel):
+    main_brand: BrandContext
+    competitors: List[BrandContext] = []
