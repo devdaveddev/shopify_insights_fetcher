@@ -4,7 +4,7 @@ A FastAPI application that scrapes Shopify store data (brand info, products, pol
 
 ---
 
-## 🚀 Features
+##  Features
 - Scrape Shopify store details (brand, products, policies, competitors)
 - Persist all fetched data into a MySQL database
 - REST API endpoint: `/fetch`
@@ -12,7 +12,7 @@ A FastAPI application that scrapes Shopify store data (brand info, products, pol
 
 ---
 
-## ⚙️ Setup Instructions
+##  Setup Instructions
 
 ### 1. Install Dependencies
 Install required Python packages:
