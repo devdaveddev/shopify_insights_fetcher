@@ -1,6 +1,5 @@
-# app/main.py
 from fastapi import FastAPI
-from routers.fetch import router as fetch_router
+from app.routers.fetch import router as fetch_router
 
 app = FastAPI(title="Shopify Insights Fetcher (MVP)")
 
