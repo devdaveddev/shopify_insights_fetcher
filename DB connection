@@ -1,0 +1,166 @@
+# Shopify Insights Scraper (with MySQL Persistence)
+
+A FastAPI application that scrapes Shopify store data (brand info, products, policies, competitors, etc.) and persists the results into a **MySQL database** for analytics and reporting.
+
+---
+
+## 🚀 Features
+- Scrape Shopify store details (brand, products, policies, competitors)
+- Persist all fetched data into a MySQL database
+- REST API endpoint: `/fetch`
+- Ready for analytics and reporting queries
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1. Install Dependencies
+Install required Python packages:
+```bash
+pip install fastapi uvicorn sqlalchemy[asyncio] asyncmy requests beautifulsoup4
+Or install from requirements.txt:
+
+bash
+Copy
+Edit
+pip install -r requirements.txt
+2. Update config.py
+Add your MySQL connection string:
+
+python
+Copy
+Edit
+# config.py
+DATABASE_URL = "mysql+asyncmy://<username>:<password>@<host>/<database>"
+Replace:
+
+<username> → Your MySQL username (e.g., root)
+
+<password> → Your MySQL password
+
+<host> → Your MySQL host (e.g., localhost)
+
+<database> → Your database name (e.g., shopify_insights)
+
+3. Create db.py (Database Setup)
+This file will configure the SQLAlchemy engine and session:
+
+python
+Copy
+Edit
+# db.py
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+from config import DATABASE_URL
+
+engine = create_async_engine(DATABASE_URL, echo=True)
+AsyncSessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+async def get_session():
+    async with AsyncSessionLocal() as session:
+        yield session
+4. Define Database Models
+Create models_db.py:
+
+python
+Copy
+Edit
+# models_db.py
+from sqlalchemy import Column, Integer, String, ForeignKey, Text
+from sqlalchemy.orm import relationship, declarative_base
+
+Base = declarative_base()
+
+class Brand(Base):
+    __tablename__ = "brands"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255))
+    url = Column(String(255), unique=True)
+    policies = Column(Text)
+
+    products = relationship("Product", back_populates="brand")
+
+class Product(Base):
+    __tablename__ = "products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255))
+    price = Column(String(50))
+    url = Column(String(255))
+    brand_id = Column(Integer, ForeignKey("brands.id"))
+
+    brand = relationship("Brand", back_populates="products")
+5. Modify fetch.py to Save Data
+Update the fetch_store function to persist data:
+
+python
+Copy
+Edit
+# fetch.py
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from db import get_session
+from models_db import Brand, Product
+from utils import scrape_store, discover_competitors  # your scraping logic
+
+router = APIRouter()
+
+@router.post("/fetch")
+async def fetch_store(website_url: str, session: AsyncSession = Depends(get_session)):
+    # Scrape main store
+    store_data = scrape_store(website_url)
+
+    brand = Brand(
+        name=store_data["name"],
+        url=website_url,
+        policies=store_data.get("policies", "")
+    )
+    session.add(brand)
+    await session.flush()  # get brand.id
+
+    for product in store_data.get("products", []):
+        new_product = Product(
+            name=product["name"],
+            price=product["price"],
+            url=product["url"],
+            brand_id=brand.id
+        )
+        session.add(new_product)
+
+    # Scrape competitors
+    competitors = discover_competitors(website_url)
+    for competitor in competitors:
+        comp_brand = Brand(
+            name=competitor["name"],
+            url=competitor["url"],
+            policies=""
+        )
+        session.add(comp_brand)
+
+    await session.commit()
+
+    return {"message": "Data saved successfully!"}
+6. Initialize the Database
+Run the script once to create tables:
+
+python
+Copy
+Edit
+# init_db.py
+import asyncio
+from db import engine
+from models_db import Base
+
+async def init():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+if __name__ == "__main__":
+    asyncio.run(init())
+Run:
+
+bash
+Copy
+Edit
+python init_db.py
