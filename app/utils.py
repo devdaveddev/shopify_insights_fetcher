@@ -88,7 +88,7 @@ def find_competitors(brand_url: str):
     domain = urlparse(brand_url).netloc
     brand = domain.split(".")[0]  # crude brand name extraction
 
-    
+    # Example competitor mapping (expand later with web search logic)
     competitors_map = {
         "allbirds": ["rothys.com", "nike.com", "adidas.com"],
         "gymshark": ["aloyoga.com", "lululemon.com", "underarmour.com"],
@@ -99,4 +99,4 @@ def find_competitors(brand_url: str):
         if key in brand.lower():
             return rivals
 
-    return []  # no known competitors
+    return []  # no known competitors# no known competitors
